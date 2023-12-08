@@ -1,0 +1,265 @@
+#!/bin/bash
+
+# Recursively creates MD5 files and notifies if files in existing MD5 files are missing.
+# New files will be appended to the end of the MD5 file.
+#
+# Can be used as a cronjob or used in a wrapper script to cycle through different
+# directories. Mainly used for static directories, where the data should not change, eg.
+# directories containing books or movies. Currently doesn't verify existing MD5 files, for
+# which a separate script or command should be used.
+
+# 1st argument: maximum depth for the generated MD5 files.
+# 2nd argument: directory for which the MD5 files will be generated.
+# 3rd argument: use bitrot instead of md5sum, used for directories with changing files.
+#
+#  EXAMPLE 1
+#
+# new-md5 0 /dir/to/books
+#
+# creates one MD5 file, recursively containing every file found in /dir/to/books.
+# If the file structure in /dir/to/books is the following:
+#
+# Book 1.epub
+# Book 2.pdf
+# Directory/Book 3.txt
+#
+# ... a .verify.md5 file will be created in /dir/to/books/.verify.md5, containing:
+# f270899858f8204b62043167ac8d9551  Book 1.epub
+# 008e6bc48c8eaa5d2855d57e6b0b8594  Book 2.pdf
+# cd5e0e3fba97e8b64cf301bbb350d7cf  Directory/Book 3.txt
+#
+#  EXAMPLE 2
+#
+# new-md5
+#
+# creates one MD5 file in the current directory.
+#
+#  EXAMPLE 3
+#
+# new-md5 2 /dir/to/tv_shows
+#
+# creates as many MD5 files as there are directories within depth 2.
+# If the file structure is the following:
+#
+# /dir/to/tv_shows
+# ├── TV Show 1
+# │   └── Season 01
+# │       ├── Episode 01.mkv
+# │       ├── Episode 02.mkv
+# │       └── Episode 03.mkv
+# └── TV Show 2
+#     ├── Season 01
+#     │   ├── Episode 01.mkv
+#     │   ├── Episode 02.mkv
+#     │   └── Episode 03.mkv
+#     └── Season 02
+#         ├── Episode 01.mkv
+#         ├── Episode 02.mkv
+#         └── Episode 03.mkv
+# 
+# ... three .verify.md5 files will be created, as there are three directories within
+# depth 2:
+# TV Show 1/Season 01/.verify.md5
+# TV Show 2/Season 01/.verify.md5
+# TV Show 2/Season 02/.verify.md5
+#
+# ... each of the .verify.md5 files contain the respective directories' files recursively, as
+# in example 1.
+#
+# If a file exists within depth 2 or higher, eg.
+#
+# /dir/to/tv_shows
+# ├── Episode 10.mkv
+# ├── TV Show 1
+# │   ├── Episode 00.mkv
+# │   └── Season 01
+# │       ├── Episode 01.mkv
+# │       ├── Episode 02.mkv
+# │       └── Episode 03.mkv
+#
+# ... Episode 00.mkv and Episode 10.mkv will not be included in any MD5 file and the user
+# will be notified of this. In this example, the second argument defining the depth should
+# be 0 instead of 2.
+#
+#  EXAMPLE 4
+#
+# new-md5 0 /dir/to/documents --bitrot
+# 
+# instead of using md5sum for appending new files to the MD5 file, the program 'bitrot'
+# will be used to create _and verify_ the files in the directory /dir/to/documents.
+#
+# Unlike in the previous examples, if a file has been changed, it will be checked for
+# corruption according to the specifications of 'bitrot'.
+#
+# See 'https://github.com/ambv/bitrot/' for more details.
+#
+#
+#
+# In summary, omit the --bitrot argument when creating MD5 files for large and static
+# directories, where files should not change. If working with a directory containing files
+# that can change over time, include the --bitrot argument.
+
+
+# TODO: add the ability to verify existing archives.
+# TODO: fix the counter when executing the script in parallel
+# TODO: implement the counter in a better way
+# TODO: implement an argument to enable/disable colorized ouput
+
+
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "usage: new-md5 [depth] [dir] [--bitrot]"
+    exit
+fi
+
+# The filename for the MD5 file
+dest=".verify.md5"
+# The depth of the directories where the MD5 files will be generated
+depth=$1
+# The root directory for the MD5 files
+dir="$2"
+
+# Check whether to use bitrot or not
+use_bitrot=false
+if [[ "$3" == "--bitrot" ]]; then
+    use_bitrot=true
+fi
+
+# Cache file containing the counter for new files
+TMPFILE="$HOME/.cache/counter-new-md5"
+
+# Cache file containing the filenames that have disappeared from the file structure.
+MISSING_FILES="$HOME/.cache/missing-new-md5"
+
+# Words to color in the bitrot output
+BITROT_COLORS=(
+    "new, 1;32"
+    "updated, 1;34"
+    "renamed, 1;33"
+    "missing. 1;41"
+)
+
+# Arguments for the bitrot program
+BITROT_OPTS=(
+    --follow-links
+)
+
+# If given no arguments, use depth 0 and the working directory.
+if [[ ! -d "$dir" ]]; then
+    dir="$PWD"
+fi
+if [[ -z $depth ]]; then
+    depth=0
+fi
+
+colorize () {
+    # Colorize the output of bitrot
+
+    while read line; do
+        for item in "${BITROT_COLORS[@]}"; do
+            name="$(echo -n "$item" | cut -d' ' -f1)"
+            code="$(echo -n "$item" | cut -d' ' -f2)"
+            line="$(echo "$line" | sed "s/ \([1-9][0-9]*\) $name/ \\\\033[${code}m\1 $name\\\\033[0m/g")"
+        done
+        echo -e "$line"
+    done
+}
+
+get_dirs () {
+    # Check for excluded files above the given depth
+    find "$(readlink -f "$dir")" -maxdepth $depth -type f 2>&1 | sed 's,^,EXCLUDED: ,g' >&2
+
+    # Get the directories to verify
+    find "$(readlink -f "$dir")" \
+        -mindepth $depth -maxdepth $depth -type d -or -type l
+}
+
+get_calculated_files () {
+    # Get a list of already calculated files, if the MD5 file exists
+    if [[ -f "$dest" ]]; then
+        cat "$dest" | sed 's,^[0-9a-f]\{32\} [ \*],,g' | sort -u
+    fi
+}
+
+get_files () {
+    # Find all files recursively in the current directory
+    find -L . -type f -not -name "$dest" \
+        | cut -d'/' -f2-
+}
+
+get_uncalculated_files () {
+    # Get files not yet included in the MD5 file
+    (get_calculated_files; get_files) \
+        | sort | uniq -u
+}
+
+update_md5 () {
+    # Updates the MD5 files in each of the directories passed from stdin
+    while read path; do
+        # If the directory can't be entered, notify the user and skip to the next one
+        if ! cd "$path"; then
+            echo "Couldn't enter $path, skipping" >&2
+            continue
+        fi
+
+        # If using bitrot, only execute 'bitrot' and skip to the next one
+        if $use_bitrot; then
+            bitrot "${BITROT_OPTS[@]}" 2>&1 \
+                | grep -v ' 0 errors found\|Updating bitrot.sha512\| integrity\.\.\. ok\.' \
+                | sed "s,^,$path: ,g" \
+                | colorize
+
+            continue
+        fi
+
+        # Reset the counter
+        echo -n 0 > "$TMPFILE"
+
+        # Get new files and append them to the MD5 file
+        get_uncalculated_files | while read file; do
+            # If a file exists in the MD5 file but not in the file structure, notify the
+            # user before exiting the script.
+            if [[ ! -f "$file" ]]; then
+                echo "$path/$file" >> "$MISSING_FILES"
+                continue
+            fi
+
+            # Read the counter from the cache file
+            i="$(cat "$TMPFILE")"
+            # Increase the counter
+            j="$(echo "$i+1" | bc)"
+            # Write the counter to the cache file
+            echo "$j" > "$TMPFILE"
+
+            # Calculate the MD5-checksum of the file and append it to the MD5 file
+            md5sum "$file" >> "$dest"
+        done
+
+        # Read the counter when all of the files have been calculated
+        i="$(cat "$TMPFILE")"
+        if [[ $i -gt 0 ]]; then
+            # Only print the counter and directory when new files have been added"
+            echo "$path: $i new files"
+        fi
+    done
+
+    # Return to the original working directory
+    cd "$original_path"
+}
+
+print_missing () {
+    # Print missing files, colorizing the output
+
+    if [[ $(wc -l "$MISSING_FILES" | cut -d' ' -f1) -eq 0 ]]; then return; fi
+
+    echo -e "\033[1;41mMISSING FILES:"
+    cat "$MISSING_FILES"
+    echo -en "\033[0m"
+}
+
+original_path="$PWD" # Get the current working directory
+echo -n > "$MISSING_FILES" # Reset the missing files cache
+
+get_dirs | # Get the directories for which MD5 files will be generated
+    update_md5 # Generate the MD5 files
+
+print_missing # Print missing files
