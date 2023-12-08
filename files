@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# Lists all filetypes in the current directory.
+# Alternatively lists all files in a given directory.
+#
+# Useful when cleaning up a directory or searching for unnecessary files.
+
+dir="$1"
+if [[ ! -d "$dir" ]]; then dir="$PWD"; fi
+
+get_files () {
+    # Find all of the files in the directory, following symbolic links
+    find -L "$dir" -type f
+}
+
+count_filetypes () {
+    # Prints found filetypes and their counts
+    # Reads the filenames from stdin
+
+    grep -v '^$'                        | # Remove empty lines
+        sed 's,.*/,,g'                  | # Remove directory names from the filenames
+        sed 's,^[^\.]*$,no extension,g' | # Group files with no filetype as 'no extension'
+        sed 's,^\.[^\.]*$,dotfiles,g'   | # Group files starting with a dot as 'dotfiles'
+        sed 's,.*\.,,g'                 | # Group the rest of the files
+        sort                            | # Sort the lines
+        uniq -c                         | # Count repeating lines
+        sort -h                           # Sort the lines to get more readable results
+}
+
+count_files () {
+    # Prints the number of files found in the directory
+    # Reads the filenames from stdin
+
+    grep -v '^$'    | # Remove empty lines
+        wc -l       | # Count the lines
+        tr -d '\n'    # Remove newline
+
+    echo ' total'
+}
+
+files="$(get_files)"
+echo "$files" | count_filetypes
+echo "$files" | count_files
