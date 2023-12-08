@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# DESTRUCTIVE: Extracts every archive in the current directory and subdirectories.
+# Deletes the original archive only when the files have been extracted successfully.
+#
+# Can be given a path as an argument, otherwise the archives will be found in the
+# working directory.
+
+EXTS=(tar gz 7z zip rar)    # Archive filetypes to search for
+
+dir="$1"
+if [[ ! -d "$dir" ]]; then dir="$PWD"; fi
+
+# Check for missing executables
+if ! type 7z > /dev/null 2>&1; then
+    echo "executable '7z' not found, exiting."
+    exit 1
+fi
+
+if ! type unrar > /dev/null 2>&1; then
+    echo "executable 'unrar' not found, exiting."
+    exit 1
+fi
+
+find_files () {
+    # Searches for archives in the directory
+
+    # Create a list of arguments from the 'EXTS' variable to be used with 'find'
+    argument_list="$(printf " -name \*.%s -or" "${EXTS[@]}" | sed 's, -or$,,g')"
+
+    # Find the archives, following symlinks
+    eval "find -L \"$dir\" -type f $argument_list"
+}
+
+extract_files () {
+    # Read the archives from stdin
+    while read file; do
+        # If the filetype is a rar-archive, uses unrar, otherwise uses 7z
+        # Removes the archive if the files have been extracted successfully
+
+        if [[ "$file" == *.rar ]]; then
+            unrar x "$file" "${file%.*}/" > /dev/null 2>&1 \
+                && rm -v "$file"
+        else
+            7z x "$file" -o"${file%.*}/" > /dev/null 2>&1 \
+                && rm -v "$file"
+        fi
+    done
+}
+
+files="$(find_files)"
+
+if [[ -z "$files" ]]; then
+    echo "No archives in the directory $dir, exiting."
+    exit
+fi
+
+# Count the number of archives found and ask the user whether or not to continue
+
+echo "$files" | wc -l | tr -d '\n'
+read -p " archive files will be extracted and deleted, continue (y/N)? " answer
+
+# Continue only when the user has answered with 'y' or 'Y'
+if [[ $answer == y || $answer == Y ]]; then
+    echo "$files" | extract_files
+fi
