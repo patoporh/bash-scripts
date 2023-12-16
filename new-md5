@@ -100,11 +100,11 @@
 # that can change over time, include the --bitrot argument.
 
 
-# TODO: add the ability to verify existing archives.
+# TODO: add the ability to verify existing archives
 # TODO: fix the counter when executing the script in parallel
 # TODO: implement the counter in a better way
 # TODO: implement an argument to enable/disable colorized ouput
-
+# TODO: implement better colorization of bitrot output
 
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     echo "usage: new-md5 [depth] [dir] [--bitrot]"
@@ -151,19 +151,6 @@ if [[ -z $depth ]]; then
     depth=0
 fi
 
-colorize () {
-    # Colorize the output of bitrot
-
-    while read line; do
-        for item in "${BITROT_COLORS[@]}"; do
-            name="$(echo -n "$item" | cut -d' ' -f1)"
-            code="$(echo -n "$item" | cut -d' ' -f2)"
-            line="$(echo "$line" | sed "s/ \([1-9][0-9]*\) $name/ \\\\033[${code}m\1 $name\\\\033[0m/g")"
-        done
-        echo -e "$line"
-    done
-}
-
 get_dirs () {
     # Check for excluded files above the given depth
     find "$(readlink -f "$dir")" -maxdepth $depth -type f 2>&1 | sed 's,^,EXCLUDED: ,g' >&2
@@ -205,8 +192,7 @@ update_md5 () {
         if $use_bitrot; then
             bitrot "${BITROT_OPTS[@]}" 2>&1 \
                 | grep -v ' 0 errors found\|Updating bitrot.sha512\| integrity\.\.\. ok\.' \
-                | sed "s,^,$path: ,g" \
-                | colorize
+                | sed "s,^,$path: ,g"
 
             continue
         fi
