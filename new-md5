@@ -248,4 +248,4 @@ echo -n > "$MISSING_FILES" # Reset the missing files cache
 get_dirs | # Get the directories for which MD5 files will be generated
     update_md5 # Generate the MD5 files
 
-print_missing # Print missing files
+print_missing >&2 # Print missing files
