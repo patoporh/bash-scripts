@@ -1,45 +1,53 @@
 #!/bin/bash
 
-# Recursively creates MD5 files and notifies if files in existing MD5 files are missing.
-# New files will be appended to the end of the MD5 file.
+# Recursively creates MD5 files and notifies if files specified in existing MD5
+# files are missing. New files will be appended to the end of the MD5 file.
 #
-# Can be used as a cronjob or used in a wrapper script to cycle through different
-# directories. Mainly used for static directories, where the data should not change, eg.
-# directories containing books or movies. Currently doesn't verify existing MD5 files, for
-# which a separate script or command should be used.
+# Can be used as a cronjob or used in a wrapper script to cycle through
+# different directories. Mainly used for static directories, where the data
+# should not change, eg. directories containing books or movies. Currently
+# doesn't verify existing MD5 files, for which a separate script or command
+# should be used.
 
 # 1st argument: maximum depth for the generated MD5 files.
 # 2nd argument: directory for which the MD5 files will be generated.
-# 3rd argument: use bitrot instead of md5sum, used for directories with changing files.
+# 3rd argument: use bitrot instead of md5sum, used for directories with
+#               changing files.
 #
 #  EXAMPLE 1
 #
-# new-md5 0 /dir/to/books
+# $ new-md5 0 /dir/to/books
 #
-# creates one MD5 file, recursively containing every file found in /dir/to/books.
-# If the file structure in /dir/to/books is the following:
+# creates one MD5 file, recursively containing every file found in
+# /dir/to/books. If the file structure in /dir/to/books is the following:
 #
 # Book 1.epub
 # Book 2.pdf
 # Directory/Book 3.txt
 #
-# ... a .verify.md5 file will be created in /dir/to/books/.verify.md5, containing:
+# ... a .verify.md5 file will be created in /dir/to/books/.verify.md5,
+# containing:
 # f270899858f8204b62043167ac8d9551  Book 1.epub
 # 008e6bc48c8eaa5d2855d57e6b0b8594  Book 2.pdf
 # cd5e0e3fba97e8b64cf301bbb350d7cf  Directory/Book 3.txt
 #
 #  EXAMPLE 2
 #
-# new-md5
+# $ new-md5
 #
-# creates one MD5 file in the current directory.
+# translates to ...
+#
+# $ new-md5 0 $PWD
+#
+# ... which is similar to example 1, except that the current working directory
+# will be used instead of /dir/to/books
 #
 #  EXAMPLE 3
 #
-# new-md5 2 /dir/to/tv_shows
+# $ new-md5 2 /dir/to/tv_shows
 #
-# creates as many MD5 files as there are directories within depth 2.
-# If the file structure is the following:
+# creates as many MD5 files as there are directories within depth 2. If the
+# file structure is the following:
 #
 # /dir/to/tv_shows
 # ├── TV Show 1
@@ -57,14 +65,14 @@
 #         ├── Episode 02.mkv
 #         └── Episode 03.mkv
 # 
-# ... three .verify.md5 files will be created, as there are three directories within
-# depth 2:
+# ... three .verify.md5 files will be created, as there are three directories
+# within depth 2:
 # TV Show 1/Season 01/.verify.md5
 # TV Show 2/Season 01/.verify.md5
 # TV Show 2/Season 02/.verify.md5
 #
-# ... each of the .verify.md5 files contain the respective directories' files recursively, as
-# in example 1.
+# ... each of the .verify.md5 files contain the respective directories' files
+# recursively, as in example 1.
 #
 # If a file exists within depth 2 or higher, eg.
 #
@@ -77,34 +85,39 @@
 # │       ├── Episode 02.mkv
 # │       └── Episode 03.mkv
 #
-# ... Episode 00.mkv and Episode 10.mkv will not be included in any MD5 file and the user
-# will be notified of this. In this example, the second argument defining the depth should
-# be 0 instead of 2.
+# ... Episode 00.mkv and Episode 10.mkv will not be included in any MD5 file
+# and the user will be notified of this. In this example, the second argument
+# defining the depth should be 0 instead of 2.
 #
 #  EXAMPLE 4
 #
-# new-md5 0 /dir/to/documents --bitrot
+# $ new-md5 0 /dir/to/documents --bitrot
 # 
-# instead of using md5sum for appending new files to the MD5 file, the program 'bitrot'
-# will be used to create _and verify_ the files in the directory /dir/to/documents.
+# instead of using md5sum for appending new files to the MD5 file, the program
+# 'bitrot' will be used to create _and verify_ the files in the directory
+# /dir/to/documents.
 #
-# Unlike in the previous examples, if a file has been changed, it will be checked for
-# corruption according to the specifications of 'bitrot'.
+# Unlike in the previous examples, if a file has been changed, it will be
+# checked for corruption according to the specifications of 'bitrot'.
 #
 # See 'https://github.com/ambv/bitrot/' for more details.
 #
 #
 #
-# In summary, omit the --bitrot argument when creating MD5 files for large and static
-# directories, where files should not change. If working with a directory containing files
-# that can change over time, include the --bitrot argument.
+# In summary, omit the --bitrot argument when creating MD5 files for large and
+# static directories, where files should not change. If working with a
+# directory containing files that can change over time, include the --bitrot
+# argument.
+#
+# When generating MD5 files in a clean directory structure, it may be more
+# convenient to specify a depth greater than zero (see example 3).
 
 
 # TODO: add the ability to verify existing archives
 # TODO: fix the counter when executing the script in parallel
 # TODO: implement the counter in a better way
-# TODO: implement an argument to enable/disable colorized ouput
-# TODO: implement better colorization of bitrot output
+# TODO: implement an argument to enable/disable colorized output
+
 
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     echo "usage: new-md5 [depth] [dir] [--bitrot]"
@@ -127,7 +140,8 @@ fi
 # Cache file containing the counter for new files
 TMPFILE="$HOME/.cache/counter-new-md5"
 
-# Cache file containing the filenames that have disappeared from the file structure.
+# Cache file containing the filenames that have disappeared from the file
+# structure.
 MISSING_FILES="$HOME/.cache/missing-new-md5"
 
 # Words to color in the bitrot output
@@ -153,7 +167,8 @@ fi
 
 get_dirs () {
     # Check for excluded files above the given depth
-    find "$(readlink -f "$dir")" -maxdepth $depth -type f 2>&1 | sed 's,^,EXCLUDED: ,g' >&2
+    find "$(readlink -f "$dir")" -maxdepth $depth -type f 2>&1 \
+        | sed 's,^,EXCLUDED: ,g' >&2
 
     # Get the directories to verify
     find "$(readlink -f "$dir")" \
@@ -182,7 +197,8 @@ get_uncalculated_files () {
 update_md5 () {
     # Updates the MD5 files in each of the directories passed from stdin
     while read path; do
-        # If the directory can't be entered, notify the user and skip to the next one
+        # If the directory can't be entered, notify the user and skip to the
+        # next one
         if ! cd "$path"; then
             echo "Couldn't enter $path, skipping" >&2
             continue
@@ -191,7 +207,6 @@ update_md5 () {
         # If using bitrot, only execute 'bitrot' and skip to the next one
         if $use_bitrot; then
             bitrot "${BITROT_OPTS[@]}" 2>&1 \
-                | grep -v ' 0 errors found\|Updating bitrot.sha512\| integrity\.\.\. ok\.' \
                 | sed "s,^,$path: ,g"
 
             continue
@@ -202,8 +217,8 @@ update_md5 () {
 
         # Get new files and append them to the MD5 file
         get_uncalculated_files | while read file; do
-            # If a file exists in the MD5 file but not in the file structure, notify the
-            # user before exiting the script.
+            # If a file exists in the MD5 file but not in the file structure,
+            # notify the user before exiting the script.
             if [[ ! -f "$file" ]]; then
                 echo "$path/$file" >> "$MISSING_FILES"
                 continue
@@ -216,14 +231,16 @@ update_md5 () {
             # Write the counter to the cache file
             echo "$j" > "$TMPFILE"
 
-            # Calculate the MD5-checksum of the file and append it to the MD5 file
+            # Calculate the MD5-checksum of the file and append it to the MD5
+            # file
             md5sum "$file" >> "$dest"
         done
 
         # Read the counter when all of the files have been calculated
         i="$(cat "$TMPFILE")"
         if [[ $i -gt 0 ]]; then
-            # Only print the counter and directory when new files have been added"
+            # Only print the counter and directory when new files have been
+            # added
             echo "$path: $i new files"
         fi
     done
