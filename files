@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Lists all filetypes in the current directory.
-# Alternatively lists all files in a given directory.
+# Alternatively lists all filetypes in a given directory.
 #
 # Useful when cleaning up a directory or searching for unnecessary files.
 
