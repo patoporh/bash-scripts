@@ -114,7 +114,6 @@
 
 
 # TODO: add the ability to verify existing archives
-# TODO: fix the counter when executing the script in parallel
 # TODO: implement the counter in a better way
 # TODO: implement an argument to enable/disable colorized output
 
@@ -143,7 +142,7 @@ if [[ "$3" == "--bitrot" ]]; then
 fi
 
 # Cache file containing the counter for new files
-TMPFILE="$HOME/.cache/counter-new-md5"
+TMPFILE="$HOME/.cache/counter-new-md5-$$"
 
 # Cache file containing the filenames that have disappeared from the file
 # structure.
@@ -271,3 +270,5 @@ get_dirs | # Get the directories for which MD5 files will be generated
     update_md5 # Generate the MD5 files
 
 print_missing >&2 # Print missing files
+
+rm "$TMPFILE" # Remove the temporary counter file
