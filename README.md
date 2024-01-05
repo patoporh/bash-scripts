@@ -1,6 +1,6 @@
 # Useful Bash scripts
 
-A collection of useful Bash scripts I've written.
+A collection of useful Bash scripts to assist with terminal workflow 
 
 __Potentially destructive scripts (can delete files interactively)__:
 
