@@ -271,4 +271,6 @@ get_dirs | # Get the directories for which MD5 files will be generated
 
 print_missing >&2 # Print missing files
 
-rm "$TMPFILE" # Remove the temporary counter file
+if [[ -f "$TMPFILE" ]]; then
+    rm "$TMPFILE" # Remove the temporary counter file if it exists
+fi
