@@ -3,8 +3,7 @@
 # DESTRUCTIVE: Extracts every archive in the current directory and subdirectories.
 # Deletes the original archive only when the files have been extracted successfully.
 #
-# Can be given a path as an argument, otherwise the archives will be found in the
-# working directory.
+# Can be given a path as an argument.
 
 EXTS=(tar gz 7z zip rar)    # Archive filetypes to search for
 
