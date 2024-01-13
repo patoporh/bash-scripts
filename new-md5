@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# usage: new-md5 [depth] [dir] [--bitrot]"
+#
 # Recursively creates MD5 files and notifies if files specified in existing MD5
 # files are missing. New files will be appended to the end of the MD5 file.
 #
@@ -8,7 +10,7 @@
 # should not change, eg. directories containing books or movies. Currently
 # doesn't verify existing MD5 files, for which a separate script or command
 # should be used.
-
+#
 # 1st argument: maximum depth for the generated MD5 files.
 # 2nd argument: directory for which the MD5 files will be generated.
 # 3rd argument: use bitrot instead of md5sum, used for directories with
