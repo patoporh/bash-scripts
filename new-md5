@@ -27,6 +27,7 @@
 #
 # ... a .verify.md5 file will be created in /dir/to/books/.verify.md5,
 # containing:
+#
 # f270899858f8204b62043167ac8d9551  Book 1.epub
 # 008e6bc48c8eaa5d2855d57e6b0b8594  Book 2.pdf
 # cd5e0e3fba97e8b64cf301bbb350d7cf  Directory/Book 3.txt
