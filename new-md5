@@ -38,7 +38,7 @@
 #
 # translates to ...
 #
-# $ new-md5 0 $PWD
+# $ new-md5 0 "$PWD"
 #
 # ... which is similar to example 1, except that the current working directory
 # will be used instead of /dir/to/books
