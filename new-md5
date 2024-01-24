@@ -127,7 +127,7 @@ if [[ "$1" == "-h" || "$1" == "--help" ]]; then
 fi
 
 # The filename for the MD5 file
-dest=".verify.md5"
+DEST=".verify.md5"
 # The depth of the directories where the MD5 files will be generated
 depth=$1
 # The root directory for the MD5 files
@@ -184,14 +184,14 @@ get_dirs () {
 
 get_calculated_files () {
     # Get a list of already calculated files, if the MD5 file exists
-    if [[ -f "$dest" ]]; then
-        cat "$dest" | sed 's,^[0-9a-f]\{32\} [ \*],,g' | sort -u
+    if [[ -f "$DEST" ]]; then
+        cat "$DEST" | sed 's,^[0-9a-f]\{32\} [ \*],,g' | sort -u
     fi
 }
 
 get_files () {
     # Find all files recursively in the current directory
-    find -L . -type f -not -name "$dest" \
+    find -L . -type f -not -name "$DEST" \
         | cut -d'/' -f2-
 }
 
@@ -240,7 +240,7 @@ update_md5 () {
 
             # Calculate the MD5-checksum of the file and append it to the MD5
             # file
-            md5sum "$file" >> "$dest"
+            md5sum "$file" >> "$DEST"
         done
 
         # Read the counter when all of the files have been calculated
