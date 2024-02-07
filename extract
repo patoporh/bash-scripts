@@ -21,7 +21,7 @@ if ! type unrar > /dev/null 2>&1; then
     exit 1
 fi
 
-find_files () {
+find_archives () {
     # Searches for archives in the directory
 
     # Create a list of arguments from the 'EXTS' variable to be used with 'find'
@@ -31,7 +31,7 @@ find_files () {
     eval "find -L \"$dir\" -type f $argument_list"
 }
 
-extract_files () {
+extract_archives () {
     # Read the archives from stdin
     while read file; do
         # If the filetype is a rar-archive, uses unrar, otherwise uses 7z
@@ -47,19 +47,19 @@ extract_files () {
     done
 }
 
-files="$(find_files)"
+archives="$(find_archives)"
 
-if [[ -z "$files" ]]; then
+if [[ -z "$archives" ]]; then
     echo "No archives in the directory $dir, exiting."
     exit
 fi
 
 # Count the number of archives found and ask the user whether or not to continue
 
-echo "$files" | wc -l | tr -d '\n'
+echo "$archives" | wc -l | tr -d '\n'
 read -p " archive files will be extracted and deleted, continue (y/N)? " answer
 
 # Continue only when the user has answered with 'y' or 'Y'
 if [[ $answer == y || $answer == Y ]]; then
-    echo "$files" | extract_files
+    echo "$archives" | extract_archives
 fi
