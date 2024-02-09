@@ -141,7 +141,7 @@ use_bitrot=false
 if [[ "$3" == "--bitrot" ]]; then
     if ! type bitrot > /dev/null 2>&1; then
         echo -n "executable 'bitrot' not found, exiting. "
-        echo "(install instructions: https://pypi.org/project/bitrot/)"
+        echo "(installation instructions: https://pypi.org/project/bitrot/)"
         exit 1
     fi
     use_bitrot=true
