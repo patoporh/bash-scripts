@@ -154,14 +154,6 @@ TMPFILE="$HOME/.cache/counter-new-md5-$$"
 # structure.
 MISSING_FILES="$HOME/.cache/missing-new-md5-$$"
 
-# Words to color in the bitrot output
-BITROT_COLORS=(
-    "new, 1;32"
-    "updated, 1;34"
-    "renamed, 1;33"
-    "missing. 1;41"
-)
-
 # Arguments for the bitrot program
 BITROT_OPTS=(
     --follow-links
