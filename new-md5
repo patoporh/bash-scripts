@@ -130,6 +130,8 @@ fi
 DEST=".verify.md5"
 # The color to print potentially missing files in
 ERROR_COLOR="\033[1;41m"
+# Whether to create an SHA1 file after running bitrot
+CREATE_SHA1_FILE=true
 
 # The depth of the directories where the MD5 files will be generated
 depth=$1
@@ -138,11 +140,20 @@ dir="$2"
 
 # Check whether to use bitrot or not
 use_bitrot=false
+
+# Notify the user of missing dependencies if necessary
 if [[ "$3" == "--bitrot" ]]; then
     if ! type bitrot > /dev/null 2>&1; then
         echo -n "executable 'bitrot' not found, exiting. "
         echo "(installation instructions: https://pypi.org/project/bitrot/)"
         exit 1
+    fi
+    if ! type sqlite3 > /dev/null 2>&1; then
+        if [[ $CREATE_SHA1_FILE == true ]]; then
+            echo -n "executable 'bitrot' not found, exiting. "
+            echo "(installation instructions: https://pypi.org/project/bitrot/)"
+            exit 1
+        fi
     fi
     use_bitrot=true
 fi
@@ -196,6 +207,19 @@ get_uncalculated_files () {
         | sort | uniq -u
 }
 
+create_sha1 () {
+    # Creates an SHA1 file based on the contents on the .bitrot.db file
+
+    if [[ ! -f ".bitrot.db" ]]; then
+        echo -n "ERROR: $PWD/.bitrot.db doesn't exist, "
+        echo "skipping sha1sum file creation"
+        return
+    fi
+
+    sqlite3 .bitrot.db 'SELECT hash,path FROM bitrot;' -separator '  ' \
+        > .verify.sha1
+}
+
 update_md5 () {
     # Updates the MD5 files in each of the directories passed from stdin
     while read path; do
@@ -210,6 +234,11 @@ update_md5 () {
         if $use_bitrot; then
             bitrot "${BITROT_OPTS[@]}" 2>&1 \
                 | sed "s,^,$path: ,g"
+
+            # After running bitrot, create a static sha1 file
+            if [[ "$CREATE_SHA1_FILE" == true ]]; then
+                create_sha1
+            fi
 
             continue
         fi
