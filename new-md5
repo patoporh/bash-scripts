@@ -150,8 +150,7 @@ if [[ "$3" == "--bitrot" ]]; then
     fi
     if ! type sqlite3 > /dev/null 2>&1; then
         if [[ $CREATE_SHA1_FILE == true ]]; then
-            echo -n "executable 'bitrot' not found, exiting. "
-            echo "(installation instructions: https://pypi.org/project/bitrot/)"
+            echo -n "executable 'sqlite3' not found, exiting."
             exit 1
         fi
     fi
