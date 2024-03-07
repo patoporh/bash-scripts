@@ -215,7 +215,8 @@ create_sha1 () {
         return
     fi
 
-    sqlite3 .bitrot.db 'SELECT hash,path FROM bitrot;' -separator '  ' \
+    sqlite3 .bitrot.db -separator '  ' \
+        "SELECT hash,path FROM bitrot WHERE path <> './.verify.sha1';" \
         > .verify.sha1
 }
 
