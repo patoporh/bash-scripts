@@ -38,5 +38,9 @@ count_files () {
 }
 
 files="$(get_files)"
+if [[ -z "$files" ]]; then
+    echo "0 total"
+    exit
+fi
 echo "$files" | count_filetypes
 echo "$files" | count_files
