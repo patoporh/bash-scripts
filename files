@@ -15,7 +15,7 @@ get_files () {
 }
 
 count_filetypes () {
-    # Prints found filetypes and their counts
+    # Prints found filetypes and their quantities
     # Reads the filenames from stdin
 
     sed 's,.*/,,g'                      | # Remove directory names from the filenames
