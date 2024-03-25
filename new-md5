@@ -1,6 +1,11 @@
 #!/bin/bash
 
-# usage: new-md5 [depth] [dir] [--bitrot]"
+# usage: new-md5 depth dir [--bitrot]"
+#
+# depth         maximum depth for the generated MD5 files.
+# dir           directory for which the MD5 files will be generated.
+# --bitrot      use bitrot instead of md5sum, used for directories with
+#               changing files.
 #
 # Recursively creates MD5 files and notifies if files specified in existing MD5
 # files are missing. New files will be appended to the end of the MD5 file.
@@ -10,11 +15,6 @@
 # should not change, eg. directories containing books or movies. Currently
 # doesn't verify existing MD5 files, for which a separate script or command
 # should be used.
-#
-# 1st argument: maximum depth for the generated MD5 files.
-# 2nd argument: directory for which the MD5 files will be generated.
-# 3rd argument: use bitrot instead of md5sum, used for directories with
-#               changing files.
 #
 #  EXAMPLE 1
 #
@@ -120,9 +120,15 @@
 # TODO: implement the counter in a better way
 # TODO: implement an argument to enable/disable colorized output
 
+USAGE="usage: new-md5 [depth] [dir] [--bitrot]
+
+depth         maximum depth for the generated MD5 files
+dir           directory for which the MD5 files will be generated
+--bitrot      use bitrot instead of md5sum, used for directories with
+              changing files"
 
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-    echo "usage: new-md5 [depth] [dir] [--bitrot]"
+    echo "$USAGE"
     exit
 fi
 
