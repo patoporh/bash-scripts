@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Calculates file counts for each directory depth and groups them together.
+# Useful when organizing a directory.
+
+dir="$PWD"
+if [[ -d "$1" ]]; then
+    dir="$(readlink -f "$1")"
+fi
+
+find "$dir" -type f \
+    | sed "s,$dir/,,g" \
+    | sed 's,[^/]*,,g' \
+    | sort \
+    | uniq -c
