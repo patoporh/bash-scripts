@@ -10,6 +10,6 @@ fi
 
 find "$dir" -type f \
     | sed "s,$dir/,,g" \
-    | sed 's,[^/]*,,g' \
+    | tr -dc '/\n' \
     | sort \
     | uniq -c
