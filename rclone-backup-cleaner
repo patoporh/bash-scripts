@@ -4,18 +4,32 @@
 # THIS SCRIPT IS CURRENTLY A PROTOTYPE, DO NOT USE!
 
 
-# An interactive script for cleaning rclone backups created with --backup-dir.
-# Doesn't work for renamed files, as it only checks files with matching
-# filenames.
-#
-# CAN BE DESTRUCTIVE. This is an interactive script, but careless use can still
-# result in data loss, although only in the backup directory. This script will
-# never touch files in the given source directory.
-
-
 rcl () {
     # Executes rclone with the given options
     eval "$RCLONE_PATH ${RCLONE_OPTS[@]} $@"
+}
+
+print_documentation () {
+    # Prints documentation
+    cat << EOF
+
+An interactive script for cleaning rclone backups created with --backup-dir.
+Doesn't work for renamed files, as it only checks files with matching
+filenames.
+
+CAN BE DESTRUCTIVE. This is an interactive script, but careless use can still
+result in data loss, although only in the backup directory. This script will
+never touch files in the given source directory.
+
+Files will be categorized, and asked to be deleted, when a matching filename in
+both the source and backup directories matches one of the following criteria:
+
+- Identical size & modification times
+- Identical hashsums (with option --hashsum hash_name)
+
+In addition, empty directories can be deleted in the backup directory with
+--rmdirs.
+EOF
 }
 
 print_help () {
@@ -25,6 +39,7 @@ usage: $(basename "$0") [OPTION...] -s /source/dir -b /backup/dir
 
 options:
   -h, --help                output this message
+  --help-all                output documentation in addition to this message
 
   -s, --source-dir          the backup's source directory
   -b, --backup-dir          the backup directory
@@ -36,6 +51,10 @@ options:
 
   -r, --rclone-opts         options to pass to rclone
   -p, --rclone-path         path to rclone, if it doesn't exist in PATH
+  --rmdirs                  remove empty directories in the backup directory
+  --hashsum hash_name       delete files with matching hashsums
+  --download                when using --hashsum, also use this option if the
+                            remote doesn't natively support calculating hashsums
 EOF
 }
 
@@ -82,6 +101,11 @@ while [[ $# -gt 0 ]]; do
     case $1 in
         -h|--help)
             print_help
+            exit 0
+            ;;
+        --help-all)
+            print_help
+            print_documentation
             exit 0
             ;;
         -b|--backup-dir)
@@ -142,7 +166,9 @@ if [[ -z "$SOURCE_DIR" || -z "$BACKUP_DIR" ]]; then
 fi
 
 # Cache file lists
+print_message "Listing source files from '$SOURCE_DIR'"
 list_files "$SOURCE_DIR" > "$CACHE_SOURCE"
+print_message "Listing backup files from '$BACKUP_DIR'"
 list_files "$BACKUP_DIR" > "$CACHE_BACKUP"
 
 # Exit if either of the directories is empty
@@ -154,6 +180,7 @@ if [[ $(du "$CACHE_BACKUP" | cut -f1) -eq 0 ]]; then
     print_important "backup directory '$BACKUP_DIR' is empty, exiting"
     exit 0
 fi
+
 
 
 # TODO: rest of the owl
