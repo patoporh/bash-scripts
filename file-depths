@@ -9,7 +9,7 @@ if [[ -d "$1" ]]; then
 fi
 
 find "$dir" -type f \
-    | sed "s,$dir/,,g" \
+    | sed "s,^$dir/,,g" \
     | tr -dc '/\n' \
     | sort \
     | uniq -c
