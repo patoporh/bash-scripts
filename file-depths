@@ -3,12 +3,27 @@
 # Calculates file counts for each directory depth and groups them together.
 # Useful when organizing a directory.
 
+if [[ "$1" == "-h" && ! -d "-h" ]]; then
+cat << EOF
+usage: file-depths [directory] [file type]
+
+calculates file counts for each directory depth in the working directory or a
+specified [directory] and groups them together
+
+optionally files can be filtered to only include the specified [file type]
+EOF
+fi
+
 dir="$PWD"
 if [[ -d "$1" ]]; then
     dir="$(readlink -f "$1")"
 fi
 
-find "$dir" -type f \
+if [[ ! -z "$2" ]]; then
+    find "$dir" -type f -iname \*."$2"
+else
+    find "$dir" -type f
+fi \
     | sed "s,^$dir/,,g" \
     | tr -dc '/\n' \
     | sort \
