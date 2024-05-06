@@ -74,7 +74,7 @@
 # TV Show 2/Season 01/.verify.md5
 # TV Show 2/Season 02/.verify.md5
 #
-# ... each of the .verify.md5 files contain the respective directories' files
+# ... each of the .verify.md5 files containing the respective directories' files
 # recursively, as in example 1.
 #
 # If a file exists within depth 2 or higher, eg.
@@ -118,7 +118,10 @@
 
 # TODO: add the ability to verify existing archives
 # TODO: implement the counter in a better way
+# TODO: add proper parsing for arguments
 # TODO: implement an argument to enable/disable colorized output
+# TODO: better implementation for cleaning up filenames with diacritics
+
 
 USAGE="usage: new-md5 [depth] [dir] [--bitrot]
 
@@ -224,11 +227,16 @@ create_sha1 () {
     sqlite3 .bitrot.db -separator '  ' \
         "SELECT hash,path FROM bitrot WHERE path <> './.verify.sha1';" \
         | sed "s,^\([a-f0-9]\{40\}\)  \./,\1  ,g" \
-        | sed 's,ä,ä,g' | sed 's,ö,ö,g' | sed 's,Ä,Ä,g' | sed 's,Ã,Ã,g' \
+        sed -e 's,ä,ä,g' -e 's,ö,ö,g' -e 's,Ä,Ä,g' -e 's,Ã,Ã,g' \
+            -e 's,é,é,g' -e 's,Ō,Ō,g' -e 's,í,í,g' -e 's,ō,ō,g' \
+            -e 's,ö,ö,g' -e 's,č,č,g' -e 's,ū,ū,g' -e 's,ï,ï,g' \
+            -e 's,å,å,g' -e 's,Ö,Ö,g' \
         > .verify.sha1
 }
 
 update_md5 () {
+    original_path="$PWD" # Get the current working directory
+
     # Updates the MD5 files in each of the directories passed from stdin
     while read path; do
         # If the directory can't be entered, notify the user and skip to the
@@ -299,8 +307,6 @@ print_missing () {
         rm "$MISSING_FILES" # Remove the temporary file
     fi
 }
-
-original_path="$PWD" # Get the current working directory
 
 get_dirs | # Get the directories for which MD5 files will be generated
     update_md5 # Generate the MD5 files
