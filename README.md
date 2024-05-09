@@ -6,21 +6,23 @@ A collection of useful Bash scripts to assist with terminal workflow.
 
 __Potentially destructive scripts (can delete files interactively)__:
 
-__`extract`__ -- Extracts every archive in the current directory and
+__`extract`__ - Extracts every archive in the current directory and
 subdirectories.
 
 ---
 
 Scripts that can create files, but won't delete any:
 
-__`new-md5`__ -- Recursively creates MD5 files and checks for missing entries in
+__`new-md5`__ - Recursively creates MD5 files and checks for missing entries in
 existing MD5 files.
+
+__`dir2cbz`__ - Converts given directories to comic book archives.
 
 ---
 
 Scripts that won't create or delete files, eg. info aggregators:
 
-__`files`__ -- Lists all filetypes in the current directory. Useful when
+__`files`__ - Lists all filetypes in the current directory. Useful when
 searching for unnecessary files. Example output:
 
 ```
@@ -31,7 +33,7 @@ $ files /dir/to/documents
 41 total
 ```
 
-__`file-depths`__ -- Calculates file counts for each directory depth and groups
+__`file-depths`__ - Calculates file counts for each directory depth and groups
 them together. Useful when organizing a directory. Example output:
 
 ```

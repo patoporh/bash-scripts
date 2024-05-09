@@ -1,0 +1,74 @@
+#!/bin/bash
+
+# Converts every given directory to a CBZ-file.
+# Can read a directory list from stdin or parameters.
+# 
+# EXAMPLE:
+#
+# If a directory structure is the following:
+#
+# Volume 01
+# |- Page 01.jpg
+# |- Page 02.jpg
+# '- Page 03.jpg
+# Volume 02
+# |- Page 01.jpg
+# |- Page 02.jpg
+# '- Page 03.jpg
+#
+# ... and the following arguments are given:
+#
+# $ dir2cbz "/path/to/Volume 01" "/path/to/Volume 02"
+#
+# ... dir2cbz will convert directories Volume 01 and Volume 02
+# into CBZ files "Volume 01.cbz" and "Volume 02.cbz".
+
+# Resulting archive format, defaulting to zip. If rar or 7z are used, remember
+# to update DEST_TYPE to match by setting it to cbr or cb7
+ARCHIVE_TYPE=zip
+
+# Resulting comic book archive format, must match with ARCHIVE_TYPE, eg.
+# ARCHIVE_TYPE=rar -> DEST_TYPE=cbr.
+DEST_TYPE=cbz
+
+# 7z options used when archiving the directory, do not change '-t'. '-mx' can
+# be changed to change compression ratio (0=no compression, 9=max compression).
+OPTS=(-t$ARCHIVE_TYPE -mx=0)
+
+convert_to_archive () {
+    dir="$(readlink -f "$1")"
+
+    # Check if the given argument is a directory
+    if [[ ! -d "$dir" ]]; then continue; fi
+
+    # If the destination file already exists, in part or cbz format,
+    # do not overwrite either and skip archival.
+    if [[ -f "$dir.$DEST_TYPE" ]]; then
+        echo "WARNING: file '$dir.$DEST_TYPE' already exists, skipping."
+        return
+    fi
+    if [[ -f "$dir.part" ]]; then
+        echo "WARNING: file '$dir.part' already exists, skipping."
+        return
+    fi
+
+    # Go inside directory tree so that the resulting archive has proper
+    # root directory, archive working directory files with '.' and move
+    # part-file to the destination type (cbz) if 7z succeeds.
+    cd "$dir" \
+        && 7z a "${OPTS[@]}" "$dir.part" . > /dev/null 2>&1 \
+        && mv "$dir.part" "$dir.$DEST_TYPE"
+    cd - > /dev/null
+}
+
+# If parameters are given to the script, cycle through them.
+# Otherwise read stin.
+if [[ ! -z "$1" ]]; then
+    for dir in "$@"; do
+        convert_to_archive "$dir"
+    done
+else
+    while read dir; do
+        convert_to_archive "$dir"
+    done
+fi
