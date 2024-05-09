@@ -2,6 +2,7 @@
 
 # Converts every given directory to a CBZ-file.
 # Can read a directory list from stdin or parameters.
+# The script will never delete the original directories.
 # 
 # EXAMPLE:
 #
