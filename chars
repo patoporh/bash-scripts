@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Prints contents of stdin in a single list, containing each occuring character
+# once. Optionally, characters can be included or excluded within the list with
+# a regex character class, eg. "A-Za-z" to exclude letters or "[^:digit:]" to
+# only include digits.
+# 
+# One use case for the script is to check for incorrect filename characters,
+# before moving files across filesystems:
+# find /dir/to/files -type f | sed 's,.*/,,g' | chars "^\/:*?\"<>|"
+
+print_chars () {
+    sed 's,\(.\),\1\n,g'                    | # Insert a newline after each character
+        sort -u                             | # Sort and remove duplicate characters
+        tr -d '\n'                            # Delete newlines
+}
+
+if [[ ! -z "$1" ]]; then
+    # If the first argument is not empty, remove the given character class from
+    # the list
+    print_chars | sed "s,[$1],,g"
+else
+    print_chars
+fi
