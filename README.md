@@ -25,16 +25,24 @@ Scripts that won't create or delete files, eg. info aggregators:
 __`files`__ - Lists all filetypes in the current directory. Useful when
 searching for unnecessary files. Example output:
 
-__`chars`__ - Prints contents of stdin in a single list, containing each
-occuring character once. Useful for finding invalid filename characters when
-moving between filesystems or looking for specific characters in a file.
-
 ```
 $ files /dir/to/documents
       3 jpg
       7 txt
      31 md
 41 total
+```
+
+__`chars`__ - Prints contents of stdin in a single list, containing each
+occuring character once. Useful for finding invalid filename characters when
+moving between filesystems or looking for specific characters in a file.
+
+```
+$ find . -type f | sed 's,^.*/,,g' | chars
+-._~0123456789aAbcCdDeEfFgGhHiIjklmMnoOprRsStTuvwxyz
+
+$ find . -type f | sed 's,^.*/,,g' | chars A-Za-z0-9
+-._~
 ```
 
 __`file-depths`__ - Calculates file counts for each directory depth and groups

@@ -7,7 +7,7 @@
 # 
 # One use case for the script is to check for incorrect filename characters,
 # before moving files across filesystems:
-# find /dir/to/files -type f | sed 's,.*/,,g' | chars "^\/:*?\"<>|"
+# find /dir/to/files -type f | sed 's,^.*/,,g' | chars "^\/:*?\"<>|"
 
 print_chars () {
     sed 's,\(.\),\1\n,g'                    | # Insert a newline after each character
