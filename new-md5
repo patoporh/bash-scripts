@@ -303,8 +303,6 @@ print_missing () {
         echo -e "${ERROR_COLOR}MISSING FILES:"
         cat "$MISSING_FILES"
         echo -en "\033[0m"
-
-        rm "$MISSING_FILES" # Remove the temporary file
     fi
 }
 
@@ -313,6 +311,5 @@ get_dirs | # Get the directories for which MD5 files will be generated
 
 print_missing >&2 # Print missing files
 
-if [[ -f "$TMPFILE" ]]; then
-    rm "$TMPFILE" # Remove the temporary counter file if it exists
-fi
+rm "$TMPFILE" # Remove the temporary counter file
+rm "$MISSING_FILES" # Remove the missing files cache
