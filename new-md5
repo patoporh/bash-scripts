@@ -167,11 +167,11 @@ if [[ "$3" == "--bitrot" ]]; then
 fi
 
 # Cache file containing the counter for new files
-TMPFILE="$HOME/.cache/counter-new-md5-$$"
+TMPFILE="$(mktemp)"
 
 # Cache file containing the filenames that have disappeared from the file
 # structure.
-MISSING_FILES="$HOME/.cache/missing-new-md5-$$"
+MISSING_FILES="$(mktemp)"
 
 # Arguments for the bitrot program
 BITROT_OPTS=(
@@ -299,7 +299,7 @@ update_md5 () {
 print_missing () {
     # Print missing files if any have been detected, colorizing the output
 
-    if [[ -f "$MISSING_FILES" ]]; then
+    if [ -s "$MISSING_FILES" ]; then
         echo -e "${ERROR_COLOR}MISSING FILES:"
         cat "$MISSING_FILES"
         echo -en "\033[0m"
