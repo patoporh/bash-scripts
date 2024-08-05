@@ -135,8 +135,8 @@ if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     exit
 fi
 
-# The filename for the MD5 file
-DEST=".verify.md5"
+# The checksum's filename, without the extension
+DEST=".verify"
 # The color to print potentially missing files in
 ERROR_COLOR="\033[1;41m"
 # Whether to create an SHA1 file after running bitrot
@@ -198,14 +198,14 @@ get_dirs () {
 
 get_calculated_files () {
     # Get a list of already calculated files, if the MD5 file exists
-    if [[ -f "$DEST" ]]; then
-        cat "$DEST" | sed 's,^[0-9a-f]\{32\} [ \*],,g' | sort -u
+    if [[ -f "$DEST.md5" ]]; then
+        cat "$DEST.md5" | sed 's,^[0-9a-f]\{32\} [ \*],,g' | sort -u
     fi
 }
 
 get_files () {
     # Find all files recursively in the current directory
-    find -L . -type f -not -name "$DEST" \
+    find -L . -type f -not -name "$DEST.md5" \
         | cut -d'/' -f2-
 }
 
@@ -225,13 +225,13 @@ create_sha1 () {
     fi
 
     sqlite3 .bitrot.db -separator '  ' \
-        "SELECT hash,path FROM bitrot WHERE path <> './.verify.sha1';" \
+        "SELECT hash,path FROM bitrot WHERE path <> './$DEST.sha1';" \
         | sed "s,^\([a-f0-9]\{40\}\)  \./,\1  ,g" \
         | sed -e 's,ä,ä,g' -e 's,ö,ö,g' -e 's,Ä,Ä,g' -e 's,Ã,Ã,g' \
             -e 's,é,é,g' -e 's,Ō,Ō,g' -e 's,í,í,g' -e 's,ō,ō,g' \
             -e 's,ö,ö,g' -e 's,č,č,g' -e 's,ū,ū,g' -e 's,ï,ï,g' \
             -e 's,å,å,g' -e 's,Ö,Ö,g' \
-        > .verify.sha1
+        > "$DEST.sha1"
 }
 
 update_md5 () {
@@ -280,7 +280,7 @@ update_md5 () {
 
             # Calculate the MD5-checksum of the file and append it to the MD5
             # file
-            md5sum "$file" >> "$DEST"
+            md5sum "$file" >> "$DEST.md5"
         done
 
         # Read the counter when all of the files have been calculated
