@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Prints contents of stdin in a single list, containing each occuring character
 # once. Optionally, characters can be included or excluded within the list with

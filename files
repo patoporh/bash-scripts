@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Lists all filetypes in the current directory.
 # Alternatively lists all filetypes in a given directory.

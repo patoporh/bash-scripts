@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # DESTRUCTIVE: Extracts every archive in the current directory and subdirectories.
 # Deletes the original archive only when the files have been extracted successfully.

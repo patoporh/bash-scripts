@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Converts every given directory to a CBZ-file.
 # Can read a directory list from stdin or parameters.

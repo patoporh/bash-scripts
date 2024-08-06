@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Calculates file counts for each directory depth and groups them together.
 # Useful when organizing a directory.
